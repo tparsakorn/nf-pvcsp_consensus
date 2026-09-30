@@ -1,4 +1,4 @@
-# nf-pvcsp
+# nf-pvcsp_consensus
 
 Reference-free consensus sequences of the *Plasmodium vivax* circumsporozoite protein gene (**PvCSP**) from Oxford Nanopore amplicon reads, as a [Nextflow](https://www.nextflow.io/) pipeline.
 
@@ -52,7 +52,7 @@ nextflow -version
 
    ```bash
    conda activate nextflow
-   nextflow run <your-github-username>/nf-pvcsp -r v0.1.0 \
+   nextflow run tparsakorn/nf-pvcsp -r v0.1.0 \
        --samplesheet samplesheet.csv \
        --outdir results
    ```
