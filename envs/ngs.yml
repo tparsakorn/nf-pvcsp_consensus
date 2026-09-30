@@ -1,0 +1,15 @@
+# Read QC, trimming, filtering and ORF check (NANOPLOT, PORECHOP, CHOPPER, CHECK_ORF).
+# Pinned to the versions the pipeline was developed and tested with.
+name: nf-pvcsp-ngs
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.11
+  - porechop_abi=0.5.1
+  - chopper=0.13.0
+  - nanoplot=1.47.1
+  # NanoPlot 1.47.1 crashes with plotly >= 7 (plotly.figure_factory.create_2d_density was removed),
+  # so plotly must stay on the 6.x version used during development.
+  - plotly=6.8.0

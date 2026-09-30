@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# spoa shim for NGSpeciesID
+# ---------------------------------------------------------------------------
+# NGSpeciesID (modules/consensus.py, function run_spoa) hardcodes this call:
+#
+#     spoa <reads> -l 0 -r 0 -g -2
+#
+#   -l 0   : LOCAL (Smith-Waterman) partial-order alignment
+#   -g -2  : gap-OPEN penalty of only 2, while gap-EXTEND stays at spoa's
+#            default of -6 (never overridden by NGSpeciesID)
+#
+# That combination (open cheaper than extend, local alignment) biases the
+# POA graph toward opening MANY short (1-2 nt) gaps rather than one clean,
+# in-frame gap, and lets local alignment "slip" register within tandemly
+# repeated motifs (e.g. the PvCSP 9-aa/27-nt VK210 "GDRA(D/G)GQPA" and
+# VK247 "ANGA(G/D)NQPG" repeats). The result is exactly the symptom
+# reported: frameshifted consensus sequences with internal stop codons,
+# concentrated in the repeat region, that get worse (not better) as more
+# reads are fed into spoa.
+#
+# There is no CLI flag in NGSpeciesID to change these values, so this
+# shim intercepts the call transparently: put this bin/ directory first
+# on PATH before invoking NGSpeciesID, and every internal call to `spoa`
+# is redirected here, which then calls the REAL spoa binary with
+# alignment/gap parameters appropriate for full-length, tandemly
+# repetitive amplicons:
+#
+#   -l 2   : semi-global alignment (reads represent the full amplicon,
+#            not partial/subsequence matches -> no benefit to local mode,
+#            and semi-global removes the incentive for repeat-register
+#            slipping that local mode creates)
+#   -g -8  : restore spoa's own default gap-open penalty
+#   -e -6  : keep spoa's own default gap-extend penalty
+#            (open > extend in magnitude, the normal/intended affine-gap
+#            relationship, so one honest indel is cheaper than many
+#            scattered ones)
+#
+# All other arguments NGSpeciesID passes (-r 0, the reads file) are
+# passed through unchanged. Only -l/-g (and any -e it might add later)
+# are overridden.
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+REAL_SPOA="${REAL_SPOA:?REAL_SPOA must point to the real spoa binary (set by the NGSPECIESID process)}"
+
+reads=""
+result="0"
+args=("$@")
+i=0
+while [ $i -lt ${#args[@]} ]; do
+    a="${args[$i]}"
+    case "$a" in
+        -l|-g|-e|-r|-m|-n|-q|-c|--algorithm)
+            i=$((i+1))  # skip this flag's value too
+            ;;
+        -*)
+            ;;
+        *)
+            reads="$a"
+            ;;
+    esac
+    i=$((i+1))
+done
+
+if [ -z "$reads" ]; then
+    echo "spoa shim: could not find reads file in arguments: $*" >&2
+    exec "$REAL_SPOA" "$@"
+fi
+
+exec "$REAL_SPOA" "$reads" -l 2 -r 0 -g -8 -e -6

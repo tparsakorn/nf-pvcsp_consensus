@@ -1,0 +1,17 @@
+# Clustering and consensus (NGSPECIESID).
+# Pinned to the versions the pipeline was developed and tested with.
+# bin/spoa (the frameshift-safe wrapper) depends on the command-line interface of spoa
+# and on how NGSpeciesID calls it, so change spoa / ngspeciesid versions with care.
+name: nf-pvcsp-ngsid
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.11
+  - ngspeciesid=0.3.1
+  - medaka=2.2.1
+  - spoa=4.1.5
+  - racon=1.5.0
+  - minimap2=2.31
+  - samtools=1.23.1

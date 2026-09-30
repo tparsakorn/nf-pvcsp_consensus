@@ -1,0 +1,3 @@
+barcode_id,fastq
+barcode01,/absolute/path/to/barcode01.fastq
+barcode02,/absolute/path/to/barcode02.fastq
